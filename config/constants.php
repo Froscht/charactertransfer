@@ -10941,3 +10941,325 @@ $config["spelldata"] = array(
         "DeathGate" => 50977,
         "Runeforging" => 53428
     );
+
+/**
+ * Skillline-IDs.
+ *
+ * Nachgeschlagen in dieser Core-Build, nicht aus dem Gedaechtnis:
+ *  - world.item_template.RequiredSkill (Professionen: "Plans:"=164, "Formula:"=333, "Pattern:"=197/165, "Design:"=755, ...)
+ *  - world.playercreateinfo_skills.comment (Waffen-, Ruestungs-, Sprach- und Klassen-Skill-Lines)
+ *  - characters.character_skills (Wertebereiche zur Gegenpruefung)
+ *
+ * by_spell      : Spell-ID aus dem Dump ("S") -> Skillline-ID. Locale-unabhaengig,
+ *                 greift fuer alle Professionen, weil das Addon "S" ueber den
+ *                 Spell-Namen der Client-Sprache zuordnet.
+ * by_name       : Skill-Line-Name aus dem Dump ("N") -> Skillline-ID, uebersetzt.
+ * by_class_name : Klassen-Skill-Lines (Holy/Protection/...), nach Klassen-ID
+ *                 getrennt, weil Namen wie "Protection"/"Heilig" mehrfach vorkommen.
+ */
+$config["skilllines"] = array(
+    "by_spell" => array(
+        2259  => 171, // Alchemy
+        2018  => 164, // Blacksmithing
+        7411  => 333, // Enchanting
+        4036  => 202, // Engineering
+        2366  => 182, // Herbalism
+        45357 => 773, // Inscription
+        25229 => 755, // Jewelcrafting
+        2108  => 165, // Leatherworking
+        8613  => 393, // Skinning
+        3908  => 197, // Tailoring
+        45542 => 129, // First Aid
+        65293 => 356, // Fishing
+        51296 => 185, // Cooking
+        762   => 762, // Riding
+    ),
+
+    "by_name" => array(
+        // Englisch
+        "Alchemy"              => 171,
+        "Blacksmithing"        => 164,
+        "Enchanting"           => 333,
+        "Engineering"          => 202,
+        "Herbalism"            => 182,
+        "Herb Gathering"       => 182,
+        "Inscription"          => 773,
+        "Jewelcrafting"        => 755,
+        "Leatherworking"       => 165,
+        "Skinning"             => 393,
+        "Tailoring"            => 197,
+        "First Aid"            => 129,
+        "Fishing"              => 356,
+        "Cooking"              => 185,
+        "Riding"               => 762,
+        "Defense"              => 95,
+        "Dual Wield"           => 118,
+        "Cloth"                => 415,
+        "Leather"              => 414,
+        "Mail"                 => 413,
+        "Plate"                => 293,
+        "Plate Mail"           => 293,
+        "Shield"               => 433,
+        "Staves"               => 136,
+        "Daggers"              => 173,
+        "Thrown"               => 176,
+        "Wands"                => 228,
+        "Crossbows"            => 226,
+        "Bows"                 => 45,
+        "Guns"                 => 46,
+        "Axes"                 => 44,
+        "Maces"                => 54,
+        "Swords"               => 43,
+        "Two-Handed Axes"      => 172,
+        "Two-Handed Maces"     => 160,
+        "Two-Handed Swords"    => 55,
+        "Polearms"             => 229,
+        "Unarmed"              => 162,
+        "Language: Common"     => 98,
+        "Language: Orcish"     => 109,
+        "Language: Dwarven"    => 111,
+        "Language: Darnassian" => 113,
+        "Language: Taurahe"    => 115,
+        "Language: Thalassian" => 137,
+        "Language: Gnomish"    => 313,
+        "Language: Troll"      => 315,
+        "Language: Forsaken"   => 673,
+        "Language: Draenei"    => 759,
+
+        // Deutsch
+        "Alchimie"               => 171,
+        "Schmiedekunst"          => 164,
+        "Verzauberkunst"         => 333,
+        "Ingenieurswesen"        => 202,
+        "Kräuterkunde"           => 182,
+        "Inschriftenkunde"       => 773,
+        "Juwelenschleifen"       => 755,
+        "Lederverarbeitung"      => 165,
+        "Häuten"                 => 393,
+        "Schneiderei"            => 197,
+        "Erste Hilfe"            => 129,
+        "Angeln"                 => 356,
+        "Kochkunst"              => 185,
+        "Reiten"                 => 762,
+        "Verteidigung"           => 95,
+        "Stoff"                  => 415,
+        "Leder"                  => 414,
+        "Plattenrüstung"         => 293,
+        "Kettenrüstung"          => 413,
+        "Schilde"                => 433,
+        "Stäbe"                  => 136,
+        "Dolche"                 => 173,
+        "Wurfwaffen"             => 176,
+        "Zauberstäbe"            => 228,
+        "Armbrüste"              => 226,
+        "Bögen"                  => 45,
+        "Schusswaffen"           => 46,
+        "Äxte"                   => 44,
+        "Streitkolben"           => 54,
+        "Schwerter"              => 43,
+        "Zweihandäxte"           => 172,
+        "Zweihandstreitkolben"   => 160,
+        "Zweihandschwerter"      => 55,
+        "Stangenwaffen"          => 229,
+        "Unbewaffnet"            => 162,
+        "Sprache: Gemeinsprache" => 98,
+        "Sprache: Orkisch"       => 109,
+        "Sprache: Darnassisch"   => 113,
+        "Sprache: Taurahe"       => 115,
+        "Sprache: Thalassisch"   => 137,
+        "Sprache: Gnomisch"      => 313,
+        "Sprache: Draenei"       => 759,
+
+        // Franzoesisch
+        "Pêche"                  => 356,
+        "Secourisme"             => 129,
+        "Monte"                  => 762,
+        "Cuisine"                => 185,
+
+        // Spanisch
+        "Pesca"                  => 356,
+        "Primeros auxilios"      => 129,
+        "Equitación"             => 762,
+        "Cocina"                 => 185,
+
+        // Russisch
+        "Рыбная ловля"           => 356,
+        "Первая помощь"          => 129,
+        "Верховая езда"          => 762,
+        "Кулинария"              => 185,
+    ),
+
+    "by_class_name" => array(
+        // 1 Krieger / Warrior
+        1 => array(
+            "Arms"       => 26,
+            "Fury"       => 256,
+            "Protection" => 257,
+            "Schutz"     => 257,
+        ),
+        // 2 Paladin
+        2 => array(
+            "Holy"        => 594,
+            "Protection"  => 267,
+            "Retribution" => 184,
+            "Heilig"      => 594,
+            "Schutz"      => 267,
+            "Vergeltung"  => 184,
+        ),
+        // 3 Jaeger / Hunter
+        3 => array(
+            "Beast Mastery"   => 50,
+            "Marksmanship"    => 163,
+            "Survival"        => 51,
+            "Tierführung"     => 50,
+            "Treffsicherheit" => 163,
+            "Überleben"       => 51,
+        ),
+        // 4 Schurke / Rogue
+        4 => array(
+            "Combat"        => 38,
+            "Assassination" => 253,
+            "Subtlety"      => 39,
+            "Kampf"         => 38,
+            "Meucheln"      => 253,
+            "Subtilität"    => 39,
+        ),
+        // 5 Priester / Priest
+        5 => array(
+            "Holy"       => 56,
+            "Discipline" => 613,
+            "Shadow"     => 78,
+            "Heilig"     => 56,
+            "Schatten"   => 78,
+        ),
+        // 6 Todesritter / Death Knight
+        6 => array(
+            "Blood"    => 770,
+            "Frost"    => 771,
+            "Unholy"   => 772,
+            "Blut"     => 770,
+            "Unheilig" => 772,
+        ),
+        // 7 Schamane / Shaman
+        7 => array(
+            "Elemental"         => 375,
+            "Enhancement"       => 373,
+            "Restoration"       => 374,
+            "Elementar"         => 375,
+            "Verbesserung"      => 373,
+            "Wiederherstellung" => 374,
+        ),
+        // 8 Magier / Mage
+        8 => array(
+            "Fire"   => 8,
+            "Frost"  => 6,
+            "Arcane" => 237,
+            "Feuer"  => 8,
+            "Arkan"  => 237,
+        ),
+        // 9 Hexenmeister / Warlock
+        9 => array(
+            "Affliction"  => 355,
+            "Demonology"  => 354,
+            "Destruction" => 593,
+            "Plage"       => 355,
+            "Dämonologie" => 354,
+            "Zerstörung"  => 593,
+        ),
+        // 11 Druide / Druid
+        11 => array(
+            "Balance"           => 574,
+            "Feral Combat"      => 134,
+            "Restoration"       => 573,
+            "Gleichgewicht"     => 574,
+            "Faulkampf"         => 134,
+            "Wiederherstellung" => 573,
+        ),
+    ),
+);
+
+/**
+ * Start-Skill-Lines aus world.playercreateinfo_skills, direkt aus der Realm-DB.
+ * Der Dump meldet nur, was das UI anzeigt; rassenspezifische Linien und
+ * Dual Wield/Wands fehlen dort. Die Core tragt sie bei der Charaktererstellung
+ * ein - ein per SQL eingesetzter Charakter braucht sie deshalb ebenfalls.
+ */
+$config["createinfo_skills"] = array(
+    array('raceMask' => 0, 'classMask' => 128, 'skill' => 6),
+    array('raceMask' => 0, 'classMask' => 128, 'skill' => 8),
+    array('raceMask' => 0, 'classMask' => 1, 'skill' => 26),
+    array('raceMask' => 0, 'classMask' => 8, 'skill' => 38),
+    array('raceMask' => 0, 'classMask' => 8, 'skill' => 39),
+    array('raceMask' => 0, 'classMask' => 39, 'skill' => 43),
+    array('raceMask' => 0, 'classMask' => 37, 'skill' => 44),
+    array('raceMask' => 650, 'classMask' => 4, 'skill' => 45),
+    array('raceMask' => 36, 'classMask' => 4, 'skill' => 46),
+    array('raceMask' => 0, 'classMask' => 4, 'skill' => 50),
+    array('raceMask' => 0, 'classMask' => 4, 'skill' => 51),
+    array('raceMask' => 0, 'classMask' => 1107, 'skill' => 54),
+    array('raceMask' => 0, 'classMask' => 35, 'skill' => 55),
+    array('raceMask' => 0, 'classMask' => 16, 'skill' => 56),
+    array('raceMask' => 0, 'classMask' => 16, 'skill' => 78),
+    array('raceMask' => 0, 'classMask' => 0, 'skill' => 95),
+    array('raceMask' => 1101, 'classMask' => 0, 'skill' => 98),
+    array('raceMask' => 4, 'classMask' => 0, 'skill' => 101),
+    array('raceMask' => 690, 'classMask' => 0, 'skill' => 109),
+    array('raceMask' => 4, 'classMask' => 0, 'skill' => 111),
+    array('raceMask' => 8, 'classMask' => 0, 'skill' => 113),
+    array('raceMask' => 32, 'classMask' => 0, 'skill' => 115),
+    array('raceMask' => 0, 'classMask' => 40, 'skill' => 118),
+    array('raceMask' => 32, 'classMask' => 0, 'skill' => 124),
+    array('raceMask' => 2, 'classMask' => 0, 'skill' => 125),
+    array('raceMask' => 8, 'classMask' => 0, 'skill' => 126),
+    array('raceMask' => 0, 'classMask' => 32, 'skill' => 129),
+    array('raceMask' => 0, 'classMask' => 1024, 'skill' => 134),
+    array('raceMask' => 0, 'classMask' => 1488, 'skill' => 136),
+    array('raceMask' => 512, 'classMask' => 0, 'skill' => 137),
+    array('raceMask' => 1061, 'classMask' => 3, 'skill' => 160),
+    array('raceMask' => 0, 'classMask' => 0, 'skill' => 162),
+    array('raceMask' => 0, 'classMask' => 4, 'skill' => 163),
+    array('raceMask' => 0, 'classMask' => 37, 'skill' => 172),
+    array('raceMask' => 735, 'classMask' => 1293, 'skill' => 173),
+    array('raceMask' => 0, 'classMask' => 9, 'skill' => 176),
+    array('raceMask' => 0, 'classMask' => 0, 'skill' => 183),
+    array('raceMask' => 0, 'classMask' => 2, 'skill' => 184),
+    array('raceMask' => 16, 'classMask' => 0, 'skill' => 220),
+    array('raceMask' => 1024, 'classMask' => 4, 'skill' => 226),
+    array('raceMask' => 0, 'classMask' => 400, 'skill' => 228),
+    array('raceMask' => 0, 'classMask' => 32, 'skill' => 229),
+    array('raceMask' => 0, 'classMask' => 128, 'skill' => 237),
+    array('raceMask' => 0, 'classMask' => 8, 'skill' => 253),
+    array('raceMask' => 0, 'classMask' => 1, 'skill' => 256),
+    array('raceMask' => 0, 'classMask' => 1, 'skill' => 257),
+    array('raceMask' => 0, 'classMask' => 2, 'skill' => 267),
+    array('raceMask' => 0, 'classMask' => 32, 'skill' => 293),
+    array('raceMask' => 64, 'classMask' => 0, 'skill' => 313),
+    array('raceMask' => 128, 'classMask' => 0, 'skill' => 315),
+    array('raceMask' => 0, 'classMask' => 256, 'skill' => 354),
+    array('raceMask' => 0, 'classMask' => 256, 'skill' => 355),
+    array('raceMask' => 0, 'classMask' => 64, 'skill' => 373),
+    array('raceMask' => 0, 'classMask' => 64, 'skill' => 374),
+    array('raceMask' => 0, 'classMask' => 64, 'skill' => 375),
+    array('raceMask' => 0, 'classMask' => 35, 'skill' => 413),
+    array('raceMask' => 0, 'classMask' => 1135, 'skill' => 414),
+    array('raceMask' => 0, 'classMask' => 0, 'skill' => 415),
+    array('raceMask' => 0, 'classMask' => 67, 'skill' => 433),
+    array('raceMask' => 0, 'classMask' => 1024, 'skill' => 573),
+    array('raceMask' => 0, 'classMask' => 1024, 'skill' => 574),
+    array('raceMask' => 0, 'classMask' => 256, 'skill' => 593),
+    array('raceMask' => 0, 'classMask' => 2, 'skill' => 594),
+    array('raceMask' => 0, 'classMask' => 16, 'skill' => 613),
+    array('raceMask' => 16, 'classMask' => 0, 'skill' => 673),
+    array('raceMask' => 128, 'classMask' => 0, 'skill' => 733),
+    array('raceMask' => 64, 'classMask' => 0, 'skill' => 753),
+    array('raceMask' => 1, 'classMask' => 0, 'skill' => 754),
+    array('raceMask' => 512, 'classMask' => 0, 'skill' => 756),
+    array('raceMask' => 1024, 'classMask' => 0, 'skill' => 759),
+    array('raceMask' => 1024, 'classMask' => 0, 'skill' => 760),
+    array('raceMask' => 0, 'classMask' => 32, 'skill' => 762),
+    array('raceMask' => 0, 'classMask' => 32, 'skill' => 770),
+    array('raceMask' => 0, 'classMask' => 32, 'skill' => 771),
+    array('raceMask' => 0, 'classMask' => 32, 'skill' => 772),
+    array('raceMask' => 0, 'classMask' => 0, 'skill' => 777),
+    array('raceMask' => 0, 'classMask' => 0, 'skill' => 778),
+);

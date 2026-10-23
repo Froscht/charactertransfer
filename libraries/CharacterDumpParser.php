@@ -13,6 +13,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  *  - spelldata    => Array aus config('constants')['spelldata']
  *  - talentspells => Array aus config('constants')['talentspells']
  *  - factions     => Array aus config('constants')['factions'] (optional, aktuell hier nicht genutzt)
+ *  - skilllines   => Array aus config('constants')['skilllines'] (by_spell / by_name / by_class_name)
+ *  - createinfo_skills => Array aus config('constants')['createinfo_skills'] (Start-Skill-Lines nach Rasse/Klasse)
  */
 class CharacterDumpParser
 {
@@ -24,6 +26,12 @@ class CharacterDumpParser
 
     /** @var array */
     private $factions = [];
+
+    /** @var array */
+    private $skilllines = [];
+
+    /** @var array */
+    private $createinfoSkills = [];
 
     /**
      * @param array $params
@@ -40,6 +48,14 @@ class CharacterDumpParser
 
         if (isset($params['factions']) && is_array($params['factions'])) {
             $this->factions = $params['factions'];
+        }
+
+        if (isset($params['skilllines']) && is_array($params['skilllines'])) {
+            $this->skilllines = $params['skilllines'];
+        }
+
+        if (isset($params['createinfo_skills']) && is_array($params['createinfo_skills'])) {
+            $this->createinfoSkills = $params['createinfo_skills'];
         }
     }
 
@@ -172,6 +188,98 @@ class CharacterDumpParser
         return "$days days, $hours hours, $minutes minutes";
     }
 
+    /**
+     * Anzeigename einer Fraktion aus der factions-Konfiguration.
+     *
+     * Die Konfiguration enthaelt kein enUS - die englischen Namen liegen in itIT.
+     *
+     * @param int    $factionId
+     * @param string $locale z.B. enUS / deDE
+     * @return string leerer String wenn unbekannt
+     */
+    public function getFactionName($factionId, $locale = '')
+    {
+        $factionId = (int)$factionId;
+
+        if (!isset($this->factions[$factionId]) || !is_array($this->factions[$factionId])) {
+            return '';
+        }
+
+        $locales = $this->factions[$factionId];
+
+        if ($locale !== '' && isset($locales[$locale]['Name'])) {
+            return (string)$locales[$locale]['Name'];
+        }
+
+        foreach (['itIT', 'deDE'] as $fallback) {
+            if (isset($locales[$fallback]['Name'])) {
+                return (string)$locales[$fallback]['Name'];
+            }
+        }
+
+        foreach ($locales as $entry) {
+            if (isset($entry['Name'])) {
+                return (string)$entry['Name'];
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Rangesname aus dem Rohe-Reputation-Wert (WotLK-Schwellen).
+     *
+     * @param int $value
+     * @return string
+     */
+    public function getReputationStanding($value)
+    {
+        $value = (int)$value;
+
+        if ($value < -42000) {
+            return 'Hated';
+        }
+        if ($value < -21000) {
+            return 'Hostile';
+        }
+        if ($value < 0) {
+            return 'Unfriendly';
+        }
+        if ($value < 36000) {
+            return 'Neutral';
+        }
+        if ($value < 63000) {
+            return 'Friendly';
+        }
+        if ($value < 84000) {
+            return 'Honored';
+        }
+        if ($value < 99000) {
+            return 'Revered';
+        }
+
+        return 'Exalted';
+    }
+
+    /**
+     * Item-Datensatz aus dem Dump in die interne Form bringen.
+     *
+     * @param array $item
+     * @return array
+     */
+    private function normalizeItem(array $item)
+    {
+        return [
+            'ID'    => (int)($item['I'] ?? 0),
+            'Count' => (int)($item['C'] ?? 1),
+            'G1'    => (int)($item['G1'] ?? 0),
+            'G2'    => (int)($item['G2'] ?? 0),
+            'G3'    => (int)($item['G3'] ?? 0),
+            'Q'     => (int)($item['Q'] ?? 0),
+            'E'     => (int)($item['E'] ?? 0),
+        ];
+    }
+
 
     /**
      * Encodiert Glyphen in Wowhead-Glyphen-Hash
@@ -250,6 +358,9 @@ class CharacterDumpParser
         $chardata["main"]["stats"]       = $data["unitstats"] ?? [];
         $chardata["main"]["playtime"]    = isset($data["unitinfo"]["playtime"]) ? $this->convertSeconds($data["unitinfo"]["playtime"]) : $this->convertSeconds(0);
         $chardata["main"]["playtimeOnLevel"]    = isset($data["unitinfo"]["playtimeonlevel"]) ? $this->convertSeconds($data["unitinfo"]["playtimeonlevel"]) : $this->convertSeconds(0);
+        // Rohe Sekunden - die Spieldauer-Spalte im Core erwartet Int, nicht den lesbaren String
+        $chardata["main"]["playtimeSeconds"]       = (int)($data["unitinfo"]["playtime"] ?? 0);
+        $chardata["main"]["playtimeOnLevelSeconds"] = (int)($data["unitinfo"]["playtimeonlevel"] ?? 0);
         $chardata["main"]["kills"]       = $data["unitinfo"]["kills"] ?? 0;
         $chardata["main"]["arenapoints"] = $data["unitinfo"]["arenapoints"] ?? 0;
         $chardata["main"]["level"]       = $data["unitinfo"]["level"] ?? 1;
@@ -393,15 +504,17 @@ class CharacterDumpParser
         $chardata["main"]["racename"] = $raceName;
 
         // --------------------------------------------------------------------
-        //  Geschlecht (Lua 1/2 -> 0/1)
+        //  Geschlecht
+        //  UnitSex() aus der Lua liefert 1 = maennlich, 2 = weiblich,
+        //  der Core (characters.gender) speichert 0 = maennlich, 1 = weiblich.
         // --------------------------------------------------------------------
-        $genderRaw = $data["unitinfo"]["gender"] ?? 1;
+        $genderRaw = (int)($data["unitinfo"]["gender"] ?? 1);
         switch ($genderRaw) {
             case 1:
-                $gender = 1;
+                $gender = 0;
                 break;
             case 2:
-                $gender = 0;
+                $gender = 1;
                 break;
             default:
                 $gender = 0;
@@ -451,30 +564,14 @@ class CharacterDumpParser
 
                 // Equipment: BagId von 0000 bis 0135
                 if ($bagId >= '0000' && $bagId <= '0135') {
-                    $characterequippment[$slot] = [
-                        'ID'  => $item['I'] ?? 0,
-                        'Count' => $item['C'] ?? 1,
-                        'G1' => $item['G1'] ?? 0,
-                        'G2' => $item['G2'] ?? 0,
-                        'G3' => $item['G3'] ?? 0,
-                        'Q'  => $item['Quality'] ?? 0,
-                        'E'  => $item['E'] ?? 0,
-                    ];
+                    $characterequippment[$slot] = $this->normalizeItem($item);
                 } else {
-                    // Taschen / Bank-Inventory
+                    // Taschen (1000 = Rucksack, 1001..1004 = Beutel)
                     if (!isset($newInventory[$bagId]) || !is_array($newInventory[$bagId])) {
                         $newInventory[$bagId] = [];
                     }
 
-                    $newInventory[$bagId][$slot] = [
-                        'ID'  => $item['I'] ?? 0,
-                        'Count' => $item['C'] ?? 1,
-                        'G1' => $item['G1'] ?? 0,
-                        'G2' => $item['G2'] ?? 0,
-                        'G3' => $item['G3'] ?? 0,
-                        'Q'  => $item['Quality'] ?? 0,
-                        'E'  => $item['E'] ?? 0,
-                    ];
+                    $newInventory[$bagId][$slot] = $this->normalizeItem($item);
                 }
             }
         }
@@ -505,6 +602,91 @@ class CharacterDumpParser
         $chardata["Equippment"]  = $characterequippment;
         $chardata["mounts"]      = $mounts;
         $chardata["pets"]        = $pets;
+
+        // --------------------------------------------------------------------
+        //  Bank - eigener Tab, bleibt getrennt vom Inventar
+        //  main:     inv:39..inv:66   -> Bank-Slots (Core-Nummerierung)
+        //  bankbags: inv:67..inv:73   -> die Bankbeutel-Items selbst
+        //  bags:     5:slot..11:slot  -> Inhalt der Bankbeutel (Container 5..11)
+        // --------------------------------------------------------------------
+        $bank = [
+            'slots'    => [],
+            'bags'     => [],
+            'contents' => [],
+        ];
+
+        if (isset($data["bank"]) && is_array($data["bank"])) {
+            if (isset($data["bank"]["main"]) && is_array($data["bank"]["main"])) {
+                foreach ($data["bank"]["main"] as $key => $item) {
+                    $slot = (int)str_replace('inv:', '', (string)$key);
+
+                    if (!is_array($item) || $slot < 39 || $slot > 66) {
+                        continue;
+                    }
+
+                    $normalized = $this->normalizeItem($item);
+                    if ($normalized['ID'] <= 0) {
+                        continue;
+                    }
+
+                    $bank['slots'][$slot] = $normalized;
+                }
+            }
+
+            if (isset($data["bank"]["bankbags"]) && is_array($data["bank"]["bankbags"])) {
+                foreach ($data["bank"]["bankbags"] as $key => $item) {
+                    $slot = (int)str_replace('inv:', '', (string)$key);
+
+                    if (!is_array($item) || $slot < 67 || $slot > 73) {
+                        continue;
+                    }
+
+                    $normalized = $this->normalizeItem($item);
+                    if ($normalized['ID'] <= 0) {
+                        continue;
+                    }
+
+                    $bank['bags'][$slot] = $normalized;
+                }
+            }
+
+            if (isset($data["bank"]["bags"]) && is_array($data["bank"]["bags"])) {
+                foreach ($data["bank"]["bags"] as $key => $item) {
+                    $parts = explode(':', (string)$key);
+
+                    if (count($parts) !== 2 || !is_array($item)) {
+                        continue;
+                    }
+
+                    $container = (int)$parts[0];
+                    $slot      = (int)$parts[1];
+
+                    if ($container < 5 || $container > 11 || $slot < 1) {
+                        continue;
+                    }
+
+                    $normalized = $this->normalizeItem($item);
+                    if ($normalized['ID'] <= 0) {
+                        continue;
+                    }
+
+                    if (!isset($bank['contents'][$container])) {
+                        $bank['contents'][$container] = [];
+                    }
+
+                    $bank['contents'][$container][$slot] = $normalized;
+                }
+            }
+        }
+
+        ksort($bank['slots']);
+        ksort($bank['bags']);
+
+        foreach ($bank['contents'] as $container => $bagContents) {
+            ksort($bank['contents'][$container]);
+        }
+
+        $chardata["bank"] = $bank;
 
         // --------------------------------------------------------------------
         //  EquipmentCache (Anzeigecache)
@@ -574,7 +756,32 @@ class CharacterDumpParser
         //  Reputation
         // --------------------------------------------------------------------
 
-        $chardata["reputation"] = $data["reputation"];
+        $reputation = [];
+
+        if (isset($data["reputation"]) && is_array($data["reputation"])) {
+            foreach ($data["reputation"] as $rep) {
+                if (!is_array($rep)) {
+                    continue;
+                }
+
+                $factionId = (int)($rep["ID"] ?? 0);
+                $value     = (int)($rep["Value"] ?? $rep["V"] ?? 0);
+
+                if ($factionId <= 0) {
+                    continue;
+                }
+
+                $reputation[] = [
+                    'ID'       => $factionId,
+                    'Value'    => $value,
+                    'Flags'    => (int)($rep["Flags"] ?? 1),
+                    'Name'     => $this->getFactionName($factionId, $chardata["main"]["locale"] ?? ''),
+                    'Standing' => $this->getReputationStanding($value),
+                ];
+            }
+        }
+
+        $chardata["reputation"] = $reputation;
 
         // --------------------------------------------------------------------
         //  Professionen / Skills
@@ -634,6 +841,29 @@ class CharacterDumpParser
                     continue;
                 }
 
+                // Skillline-ID aufloesen: ohne sie fehlt der Skill beim Transfer
+                $resolved = $this->resolveSkillId($skill, $class);
+
+                if ($resolved['id'] > 0) {
+                    $current = (int)($skill['C'] ?? 0);
+                    $max     = (int)($skill['M'] ?? 0);
+
+                    // Klassen-Skill-Lines meldet der Client mit 1/1, die Core fuehrt
+                    // sie aber als level*5 (Level 80 = 400/400) - siehe character_skills.
+                    if ($resolved['classline']) {
+                        $cap     = min(400, ((int)($data["unitinfo"]["level"] ?? 1)) * 5);
+                        $current = $cap;
+                        $max     = $cap;
+                    }
+
+                    $skills[] = [
+                        'Skill' => $resolved['id'],
+                        'Name'  => isset($skill['N']) ? (string)$skill['N'] : '',
+                        'C'     => $current,
+                        'M'     => $max,
+                    ];
+                }
+
                 if (isset($skill["S"])) {
                     // Check if the skill is in profmain or profsec and add them to professions
                     if (isset($profmain[$skill['S']])) {
@@ -660,6 +890,69 @@ class CharacterDumpParser
                     }
                 }
             }
+        }
+
+        // Skill-Lines, die das Addon nicht meldet (Header/versteckt), die auf dem
+        // Realm aber jeder Charakter hat: 183 GENERIC (DND), 777 Mounts,
+        // 778 Companion Pets. max entspricht level*5 (Level 80 = 400), 183 zusaetzlich value = max.
+        $levelCap = min(400, ((int)($data["unitinfo"]["level"] ?? 1)) * 5);
+        $known    = [];
+
+        foreach ($skills as $entry) {
+            $known[$entry['Skill']] = true;
+        }
+
+        foreach ([183 => $levelCap, 777 => 1, 778 => 1] as $hiddenId => $hiddenValue) {
+            if (isset($known[$hiddenId])) {
+                continue;
+            }
+
+            $known[$hiddenId] = true;
+
+            $skills[] = [
+                'Skill' => $hiddenId,
+                'Name'  => '',
+                'C'     => $hiddenValue,
+                'M'     => $levelCap,
+            ];
+        }
+
+        // Start-Skill-Lines der Rasse/Klasse (playercreateinfo_skills): rassenspezifische
+        // Linien und Dual Wield/Wands tauchen im Dump-UI nicht auf, die Core fuehrt sie
+        // aber fuer jeden Charakter. Was der Dump bereits gemeldet hat, bleibt unangetastet.
+        $raceMask  = ($race  > 0) ? (1 << ($race - 1))  : 0;
+        $classMask = ($class > 0) ? (1 << ($class - 1)) : 0;
+
+        foreach ($this->createinfoSkills as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $skillId = (int)($entry['skill'] ?? 0);
+
+            if ($skillId <= 0 || isset($known[$skillId])) {
+                continue;
+            }
+
+            $entryRace  = (int)($entry['raceMask'] ?? 0);
+            $entryClass = (int)($entry['classMask'] ?? 0);
+
+            if ($entryRace != 0 && ($entryRace & $raceMask) === 0) {
+                continue;
+            }
+
+            if ($entryClass != 0 && ($entryClass & $classMask) === 0) {
+                continue;
+            }
+
+            $known[$skillId] = true;
+
+            $skills[] = [
+                'Skill' => $skillId,
+                'Name'  => '',
+                'C'     => $levelCap,
+                'M'     => $levelCap,
+            ];
         }
 
         $chardata["skills"]      = $skills;
@@ -849,5 +1142,50 @@ class CharacterDumpParser
 
 
         return $chardata;
+    }
+
+    // ------------------------------------------------------------------------
+    //  Skillline-IDs
+    // ------------------------------------------------------------------------
+
+    /**
+     * Skillline-ID zu einem Skill-Eintrag aus dem Dump.
+     *
+     * Reihenfolge:
+     *  1. "Skill"                 - liefert das Addon selbst (Waffenfertigkeiten ueber die
+     *                               Achievement-Kriterien, Asset-ID == Skillline-ID)
+     *  2. "S"  ueber by_spell     - Professionen, locale-unabhaengig
+     *  3. "N"  ueber by_name      - uebersetzte Skill-Line-Namen
+     *  4. "N"  ueber by_class_name - Klassen-Skill-Lines (Holy/Protection/...)
+     *
+     * @param  array $skill
+     * @param  int   $classId
+     * @return array array('id' => Skillline-ID (0 = nicht aufloesbar),
+     *                      'classline' => true bei Aufloesung ueber by_class_name)
+     */
+    private function resolveSkillId(array $skill, $classId = 0)
+    {
+        if (isset($skill['Skill']) && (int)$skill['Skill'] > 0) {
+            return ['id' => (int)$skill['Skill'], 'classline' => false];
+        }
+
+        if (isset($skill['S']) && isset($this->skilllines['by_spell'][(int)$skill['S']])) {
+            return ['id' => (int)$this->skilllines['by_spell'][(int)$skill['S']], 'classline' => false];
+        }
+
+        $name = isset($skill['N']) ? trim((string)$skill['N']) : '';
+        if ($name === '') {
+            return ['id' => 0, 'classline' => false];
+        }
+
+        if (isset($this->skilllines['by_name'][$name])) {
+            return ['id' => (int)$this->skilllines['by_name'][$name], 'classline' => false];
+        }
+
+        if ($classId > 0 && isset($this->skilllines['by_class_name'][$classId][$name])) {
+            return ['id' => (int)$this->skilllines['by_class_name'][$classId][$name], 'classline' => true];
+        }
+
+        return ['id' => 0, 'classline' => false];
     }
 }

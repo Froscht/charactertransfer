@@ -56,6 +56,9 @@
             <button class="nav-link" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory" type="button" role="tab" aria-controls="inventory" aria-selected="false">{lang("inventory_tab", "charactertransfer")}</button>
         </li>
         <li class="nav-item" role="presentation">
+            <button class="nav-link" id="bank-tab" data-bs-toggle="tab" data-bs-target="#bank" type="button" role="tab" aria-controls="bank" aria-selected="false">{lang("bank_tab", "charactertransfer")}</button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link" id="statistics-tab" data-bs-toggle="tab" data-bs-target="#statistics" type="button" role="tab" aria-controls="statistics" aria-selected="false">Statistics</button>
         </li>
         <li class="nav-item" role="presentation">
@@ -818,7 +821,7 @@
                                 }
 
                                 // Inventory table: sort by Wowhead *name* (link text), fallback to item-id
-                                if (table.attr('id') === 'dataTable') {
+                                if (table.attr('id') === 'dataTable' || table.attr('id') === 'bankTable') {
                                     if (column === 0) { // Name column
                                         var aLink = $(a).find('td').eq(column).find('a');
                                         var bLink = $(b).find('td').eq(column).find('a');
@@ -857,6 +860,82 @@
                 </script>
             </div>
         </div> <!-- /INVENTORY TAB -->
+
+        <!-- BANK TAB -->
+        <div class="tab-pane fade" id="bank" role="tabpanel" aria-labelledby="bank-tab">
+            <div class="container">
+                <h3>{lang("bank_tab", "charactertransfer")}</h3>
+                <div class="table-responsive">
+                    <table id="bankTable" class="table table-dark table-striped align-middle mb-4">
+                        <thead>
+                        <tr>
+                            <th class="sortable" data-column="0" data-order="asc" style="cursor: pointer;">{lang("name", "charactertransfer")}</th>
+                            <th class="sortable" data-column="1" data-order="asc" style="cursor: pointer;">{lang("count", "charactertransfer")}</th>
+                            <th class="sortable" data-column="2" data-order="asc" style="cursor: pointer;">{lang("slot", "charactertransfer")}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {if !empty($bank.bags)}
+                            {foreach $bank.bags as $slot => $item}
+                                <tr>
+                                    <td>
+                                        <a class="item"
+                                           data-wh-rename-link="true"
+                                           data-wh-icon-size="small"
+                                           data-item-id="{$item.ID}"
+                                           href="https://www.wowhead.com/wotlk/de/item={$item.ID}"></a>
+                                    </td>
+                                    <td>{$item.Count}</td>
+                                    <td>{lang("bank_bag", "charactertransfer")} {$slot}</td>
+                                </tr>
+                            {/foreach}
+                        {/if}
+                        {if !empty($bank.slots)}
+                            {foreach $bank.slots as $slot => $item}
+                                <tr>
+                                    <td>
+                                        <a class="item"
+                                           data-wh-rename-link="true"
+                                           data-wh-icon-size="small"
+                                           data-item-id="{$item.ID}"
+                                           href="https://www.wowhead.com/wotlk/de/item={$item.ID}"></a>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="item" min="0" class="form-control" value="{$item.Count}">
+                                    </td>
+                                    <td>{$slot}</td>
+                                </tr>
+                            {/foreach}
+                        {/if}
+                        {if !empty($bank.contents)}
+                            {foreach $bank.contents as $container => $items}
+                                {foreach $items as $slot => $item}
+                                    <tr>
+                                        <td>
+                                            <a class="item"
+                                               data-wh-rename-link="true"
+                                               data-wh-icon-size="small"
+                                               data-item-id="{$item.ID}"
+                                               href="https://www.wowhead.com/wotlk/de/item={$item.ID}"></a>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="item" min="0" class="form-control" value="{$item.Count}">
+                                        </td>
+                                        <td>{lang("bank_bag", "charactertransfer")} {$container+62} / {$slot}</td>
+                                    </tr>
+                                {/foreach}
+                            {/foreach}
+                        {/if}
+                        {if empty($bank.bags) && empty($bank.slots) && empty($bank.contents)}
+                            <tr>
+                                <td colspan="3">{lang("no_bank_data", "charactertransfer")}</td>
+                            </tr>
+                        {/if}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div> <!-- /BANK TAB -->
 
         <!-- STATISTICS TAB -->
         <div class="tab-pane fade" id="statistics" role="tabpanel" aria-labelledby="statistics-tab">
@@ -973,9 +1052,8 @@
                                 {foreach $reputation as $rep}
                                     <tr>
 
-                                        <td><a data-wh-rename-link="true" data-wh-icon-size="tiny" href="https://www.wowhead.com/faction={$rep.ID}">Faction name from db later</a>
-                                        </td>
-                                        <td>XX</td>
+                                        <td><a data-wh-rename-link="true" data-wh-icon-size="tiny" href="https://www.wowhead.com/faction={$rep.ID}">{if !empty($rep.Name)}{$rep.Name}{else}Faction {$rep.ID}{/if}</a></td>
+                                        <td>{$rep.Standing}</td>
                                         <td>{$rep.Value}</td>
                                     </tr>
                                 {/foreach}

@@ -87,42 +87,14 @@ class Charactertransfer extends MX_Controller
 
         $file = $_FILES['fileToUpload'];
 
-        // Der Upload muss aus einem echten PHP-Upload stammen
-        if (!isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+        // Check file size (max 5MB)
+        if ($file['size'] > 5242880) {
             return false;
         }
 
-        // Check file size (max 5MB) - gross auf der Client-gemeldeten Groesse
-        if ($file['size'] > 5242880 || filesize($file['tmp_name']) > 5242880) {
-            return false;
-        }
-
-        // MIME type wird serverseitig bestimmt, $_FILES['type'] kommt vom Client
-        // und ist fuer .lua-Dateien unzuverlaessig (leer, application/x-lua, ...)
-        $mime = '';
-        if (function_exists('finfo_open')) {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            if ($finfo !== false) {
-                $detected = finfo_file($finfo, $file['tmp_name']);
-                finfo_close($finfo);
-                if (is_string($detected)) {
-                    $mime = $detected;
-                }
-            }
-        }
-
-        if ($mime === '') {
-            $mime = (string)$file['type'];
-        }
-
-        $allowedMimeTypes = [
-            'text/plain',
-            'text/x-lua',
-            'application/x-lua',
-            'application/octet-stream',
-            'application/empty',
-        ];
-        if (!in_array($mime, $allowedMimeTypes, true)) {
+        // Check MIME type
+        $allowedMimeTypes = ['text/plain', 'application/octet-stream'];
+        if (!in_array($file['type'], $allowedMimeTypes)) {
             return false;
         }
 

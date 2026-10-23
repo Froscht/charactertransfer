@@ -10,8 +10,6 @@ class transfer_model extends CI_Model
     private $spelldata = [];
     private $talentspells = [];
     private $factions = [];
-    private $skilllines = [];
-    private $createinfoSkills = [];
 
     /** @var CharacterDumpParser */
     private $dumpParser;
@@ -29,8 +27,6 @@ class transfer_model extends CI_Model
         $this->spelldata    = (array) $this->config->item('spelldata');
         $this->talentspells = (array) $this->config->item('talentspells');
         $this->factions     = (array) $this->config->item('factions');
-        $this->skilllines   = (array) $this->config->item('skilllines');
-        $this->createinfoSkills = (array) $this->config->item('createinfo_skills');
 
         /**
          * Libraries direkt einbinden, unabhängig vom MX_Loader:
@@ -45,11 +41,11 @@ class transfer_model extends CI_Model
             'spelldata'    => $this->spelldata,
             'talentspells' => $this->talentspells,
             'factions'     => $this->factions,
-            'skilllines'   => $this->skilllines,
-            'createinfo_skills' => $this->createinfoSkills,
         ]);
 
-        $this->sqlGenerator = new CharacterSqlGenerator($this->factions);
+        $this->sqlGenerator = new CharacterSqlGenerator([
+            'factions' => $this->factions,
+        ]);
     }
 
     /**

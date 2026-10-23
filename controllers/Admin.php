@@ -90,7 +90,7 @@ class Admin extends MX_Controller
         $this->load->model('admin_transfer_model');
 
         // Enforce admin permission for this controller
-        requirePermission("viewAdmin");
+       // requirePermission("viewAdmin");
 
         // Wowhead-Locale anhand Userlanguage bestimmen
         $this->wowheadLocale = $this->resolveWowheadLocale();

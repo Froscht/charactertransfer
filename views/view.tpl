@@ -1,14 +1,28 @@
 
-<script src="https://wow.zamimg.com/js/tooltips.js"></script>
-
 <script>
-    const whTooltips = {
-        colorLinks: true,
-        iconizeLinks: true,
-        iconSize: true,
-        renameLinks: false,
+    // application/themes/default/views/header.tpl:70 deklariert bereits "const whTooltips"
+    // und lädt https://wow.zamimg.com/js/tooltips.js (:71), sobald use_fgen_tooltip false ist.
+    // Eine zweite const-Deklaration hier ist ein SyntaxError ("redeclaration of const
+    // whTooltips") und killt gleich das ganze Script-Block - also auch talents/achievements/
+    // professions/currency/money/mounts/pets/reputation darunter. Deshalb wird nur das
+    // vorhandene Objekt angepasst und das Script nachgeladen, falls das Theme es nicht lud.
+    (function () {
+        var cfg = (typeof whTooltips === "object" && whTooltips) ? whTooltips
+            : ((typeof wowhead_tooltips === "object" && wowhead_tooltips) ? wowhead_tooltips : null);
+        if (!cfg) {
+            cfg = window.whTooltips = {};
+        }
+        cfg.colorLinks = true;
+        cfg.iconizeLinks = true;
+        cfg.renameLinks = false;
+        cfg.iconSize = "small";
 
-    };
+        if (typeof WH === "undefined") {
+            var s = document.createElement("script");
+            s.src = "https://wow.zamimg.com/js/tooltips.js";
+            document.head.appendChild(s);
+        }
+    })();
 
 
 
